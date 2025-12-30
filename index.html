@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ALEX MORGAN | Narrative Editor</title>
+    <meta name="description" content="Professional video editor specializing in narrative structure, pacing, and emotional impact for film and commercial projects.">
+
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+        1. CSS VARIABLES & DESIGN TOKENS
+        ========================================
+        Psychology: Using a warm "paper" tone (Cream) instead of harsh white reduces eye strain 
+        and signals a more editorial, thoughtful approach. The Terracotta accent is warm,
+        creative, and confident without being aggressive like bright red.
+        */
+        :root {
+            --color-bg-main: #F9F7F2; /* Warm Alabaster */
+            --color-bg-secondary: #EAE6DE; /* Slightly darker cream for contrast */
+            --color-text-primary: #1A1A1A; /* Deep Charcoal - Softer than pure black */
+            --color-text-secondary: #666666; /* Muted grey for supporting text */
+            --color-accent: #C06C50; /* Muted Terracotta - The "Action" color */
+            --color-border: rgba(26, 26, 26, 0.1);
+
+            /* Typography Scale - Using clamp() for fluid responsiveness */
+            --font-sans: 'Inter', Helvetica, Arial, sans-serif; /* Clean, modern, efficient */
+            --font-serif: 'Playfair Display', Georgia, serif; /* Editorial, emotional, cinematic */
+
+            --text-display: clamp(3rem, 8vw, 7rem); /* Massive hero text */
+            --text-h1: clamp(2.5rem, 5vw, 4.5rem);
+            --text-h2: clamp(1.8rem, 3vw, 3rem);
+            --text-h3: clamp(1.2rem, 2vw, 1.8rem);
+            --text-body: clamp(1rem, 1.1vw, 1.125rem);
+            --text-small: 0.875rem;
+
+            --section-spacing: clamp(5rem, 10vw, 12rem); /* Ample whitespace = Luxury */
+            --container-width: 1400px;
+            --transition-smooth: all 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* "Buttery" ease */
+        }
+
+        /* ========================================
+        2. RESET & BASE STYLES
+        ========================================
+        */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: auto; /* Disabled because we are using Lenis smooth scroll JS */
+        }
+
+        body {
+            background-color: var(--color-bg-main);
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+            font-size: var(--text-body);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            /* Hiding cursor so our custom JS cursor takes over (on desktop) */
+            cursor: none; 
+        }
+        
+        /* Re-enable standard cursor for touch devices where custom cursor fails */
+        @media (pointer: coarse) {
+            body { cursor: auto; }
+        }
+
+        /* Selection color to match branding */
+        ::selection { background-color: var(--color-accent); color: var(--color-bg-main); }
+
+        a { text-decoration: none; color: inherit; cursor: none; }
+        ul { list-style: none; }
+        img, video { max-width: 100%; height: auto; display: block; }
+        button { border: none; background: none; cursor: none; font-family: inherit; }
+
+        /* ========================================
+        3. UTILITY CLASSES & ANIMATIONS
+        ========================================
+        These handle the scroll-into-view animations that give the site "life".
+        */
+        .container {
+            width: 90%;
+            max-width: var(--container-width);
+            margin: 0 auto;
+        }
+
+        /* The "Reveal" animation state - Initial hidden state */
+        [data-scroll] {
+            opacity: 0;
+            transform: translateY(40px) scale(0.98);
+            transition: opacity 1s ease, transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* The state when the element enters the viewport */
+        [data-scroll].is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Stagger delays for grouped elements */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+
+        /* Typography Utilities */
+        .serif { font-family: var(--font-serif); }
+        .accent { color: var(--color-accent); }
+        .secondary-text { color: var(--color-text-secondary); }
+        .uppercase { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; font-size: 0.8rem;}
+        
+        /* ========================================
+        4. NAVIGATION
+        ========================================
+        Designed to get out of the way. It mixes the serif/sans fonts to show versatility.
+        */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 0;
+            z-index: 100;
+            transition: transform 0.4s ease, background-color 0.4s ease;
+            mix-blend-mode: difference; /* Ensures visibility on light or dark backgrounds */
+            color: #fff; /* Because of difference blend mode, this looks dark on light bg */
+        }
+        
+        /* Class added via JS when scrolling down to hide nav */
+        .navbar.nav-hidden { transform: translateY(-100%); }
+        /* Class added via JS when scrolling up to show nav with background */
+        .navbar.nav-scrolled { background-color: rgba(26, 26, 26, 0.9); mix-blend-mode: normal; color: var(--color-bg-main); padding: 1rem 0;}
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links { display: flex; gap: 3rem; }
+        .nav-link {
+            position: relative;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Premium underline hover effect */
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background-color: currentColor;
+            transition: var(--transition-smooth);
+        }
+        .nav-link:hover::after { width: 100%; }
+
+
+        /* ========================================
+        5. HERO SECTION
+        ========================================
+        The "Hook". Uses a silent video loop to establish context immediately without friction.
+        */
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .hero-bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.15; /* Subtle texture, not distracting */
+            pointer-events: none;
+            filter: grayscale(100%) contrast(1.2); /* Cinematic B&W look */
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+        }
+
+        h1.hero-title {
+            font-family: var(--font-serif);
+            font-size: var(--text-display);
+            line-height: 1;
+            margin-bottom: 2rem;
+        }
+
+        .hero-subtitle {
+            font-size: var(--text-h3);
+            color: var(--color-text-secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+
+        /* Premium Magnetic Button Style */
+        .btn-magnetic {
+            display: inline-block;
+            padding: 1.2rem 2.5rem;
+            border: 1px solid var(--color-text-primary);
+            border-radius: 50px; /* Pill shape */
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-magnetic__fill {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-text-primary);
+            transform: translateY(100%); /* Hidden below */
+            transition: transform 0.5s cubic-bezier(0.7, 0, 0.3, 1);
+            z-index: -1;
+        }
+
+        .btn-magnetic:hover { color: var(--color-bg-main); border-color: transparent;}
+        .btn-magnetic:hover .btn-magnetic__fill { transform: translateY(0); }
+
+
+        /* ========================================
+        6. THE REEL SECTION (The Core Value)
+        ========================================
+        */
+        .section-reel { padding: var(--section-spacing) 0; }
+        
+        .reel-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background-color: var(--color-bg-secondary);
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: none; /* Custom cursor takes over */
+        }
+
+        .reel-placeholder-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1s ease;
+        }
+        
+        .reel-container:hover .reel-placeholder-img { transform: scale(1.03); }
+
+        /* The custom "Play" button that follows the mouse inside the reel area */
+        .play-cursor {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0); /* Start hidden */
+            width: 100px; height: 100px;
+            background-color: var(--color-accent);
+            color: var(--color-bg-main);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; text-transform: uppercase;
+            pointer-events: none;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        
+        .reel-container:hover .play-cursor { transform: translate(-50%, -50%) scale(1); }
+
+
+        /* ========================================
+        7. PHILOSOPHY SECTION (The Narrative)
+        ========================================
+        */
+        .section-philosophy {
+            padding: var(--section-spacing) 0;
+            background-color: var(--color-bg-secondary); /* Subtle shift in background color */
+        }
+
+        .philosophy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .lead-paragraph {
+            font-family: var(--font-serif);
+            font-size: var(--text-h2);
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+
+        /* ========================================
+        8. WORK GRID (The Proof)
+        ========================================
+        */
+        .section-work { padding: var(--section-spacing) 0; }
+
+        .work-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 Column layout */
+            gap: 4rem 2rem;
+            margin-top: 4rem;
+        }
+
+        .work-item {
+            display: block;
+            position: relative;
+        }
+
+        /* Some items offset for a less rigid, more "designed" feel */
+        .work-item:nth-child(even) { transform: translateY(3rem); }
+
+        .work-media {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3; /* Cinematic aspect ratio */
+            overflow: hidden;
+            border-radius: 4px;
+            background-color: var(--color-bg-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .work-media img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Hover Effect: Slight zoom on image */
+        .work-item:hover .work-media img { transform: scale(1.05); }
+
+        .work-info h3 { font-size: var(--text-h3); margin-bottom: 0.5rem; }
+        .work-meta { color: var(--color-text-secondary); font-family: var(--font-serif); font-style: italic;}
+
+
+        /* ========================================
+        9. FOOTER (The Call to Action)
+        ========================================
+        */
+        .section-footer { padding: var(--section-spacing) 0 4rem 0; }
+
+        .cta-big {
+            font-family: var(--font-serif);
+            font-size: clamp(3rem, 7vw, 6rem);
+            line-height: 1;
+            color: var(--color-text-primary);
+            display: inline-block;
+            border-bottom: 2px solid rgba(26, 26, 26, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .cta-big:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+        .footer-bottom {
+            margin-top: 5rem;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 2rem;
+            border-top: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+        .footer-links { display: flex; gap: 2rem; }
+
+
+        /* ========================================
+        10. CUSTOM CURSOR STYLES
+        ========================================
+        Adds a premium, fluid feel to desktop interaction.
+        */
+        .cursor-dot, .cursor-outline {
+            pointer-events: none;
+            position: fixed;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            transition: opacity 0.3s ease-in-out, transform 0.1s;
+        }
+
+        .cursor-dot {
+            width: 8px; height: 8px;
+            background-color: var(--color-accent);
+        }
+
+        .cursor-outline {
+            width: 40px; height: 40px;
+            border: 1px solid var(--color-accent);
+            transition: transform 0.15s ease-out, width 0.3s, height 0.3s;
+        }
+
+        /* State when hovering over links/buttons */
+        body.cursor-hover .cursor-outline {
+            transform: translate(-50%, -50%) scale(1.5);
+            background-color: rgba(192, 108, 80, 0.1);
+            border-color: transparent;
+        }
+        body.cursor-hover .cursor-dot { opacity: 0; }
+
+
+        /* ========================================
+        11. RESPONSIVE ADAPTATIONS
+        ========================================
+        */
+        @media (max-width: 1024px) {
+             /* Reset work grid to 1 column on tablets */
+            .work-grid { grid-template-columns: 1fr; gap: 3rem; }
+            .work-item:nth-child(even) { transform: translateY(0); }
+            .hero-bg-video { opacity: 0.1; /* Fade background more on smaller screens */ }
+        }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 1rem 0; }
+            /* Hide desktop nav links, replace with simple menu icon (simplified for this demo) */
+            .nav-links { display: none; }
+            .philosophy-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .footer-bottom { flex-direction: column; gap: 1.5rem; }
+        }
+    </style>
+</head>
+
+<body data-barba="wrapper">
+
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo hover-trigger">ALEX MORGAN.</a>
+            <div class="nav-links">
+                <a href="#work" class="nav-link hover-trigger">Selected Work</a>
+                <a href="#philosophy" class="nav-link hover-trigger">Philosophy</a>
+                <a href="#contact" class="nav-link hover-trigger">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main data-barba="container">
+
+        <section class="hero">
+            <video class="hero-bg-video" autoplay muted loop playsinline oncontextmenu="return false;">
+                <source src="https://cdn.coverr.co/videos/coverr-film-grain-texture-1473/1080p.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+            </video>
+
+
+            <div class="container hero-content">
+                <h1 class="hero-title" data-scroll>
+                    Refining chaos<br>
+                    <span class="serif">into narrative clarity.</span>
+                </h1>
+                <p class="hero-subtitle delay-1" data-scroll>
+                    Award-winning editor specializing in pacing, structure, and emotional impact for film and high-end commercials.
+                </p>
+                <div class="delay-2" data-scroll>
+                    <a href="#work" class="btn-magnetic hover-trigger">
+                        <span style="position: relative; z-index: 2;">View Showreel</span>
+                        <div class="btn-magnetic__fill"></div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-reel" id="work">
+            <div class="container">
+                <div class="uppercase secondary-text" style="margin-bottom: 2rem;" data-scroll>The Hook</div>
+                
+                <div class="reel-container" data-scroll>
+                    <div class="play-cursor">Play</div>
+                    <img src="https://images.unsplash.com/photo-1536240478700-b869070f9279?q=80&w=2000&auto=format&fit=crop" alt="Showreel Thumbnail" class="reel-placeholder-img">
+                </div>
+            </div>
+        </section>
+
+        <section class="section-philosophy" id="philosophy">
+            <div class="container philosophy-grid">
+                <div class="uppercase secondary-text" data-scroll>Philosophy</div>
+                <div class="philosophy-content">
+                    <p class="lead-paragraph" data-scroll>
+                        "The best editing is felt, not seen. My job is to protect the audience from the mechanics of filmmaking so they can connect with the soul of the story."
+                    </p>
+                    <div class="body-text delay-1" data-scroll>
+                        <p style="margin-bottom: 1.5rem;">
+                            With 7 years of experience cutting for brands like [Brand A] and award-winning shorts, I approach every timeline not as a technical assembly, but as a rhythmic composition.
+                        </p>
+                        <p>
+                            I believe in the "invisible cut." Whether it’s a 30-second spot or a long-form documentary, my focus is on finding the emotional truth in the footage and structuring it for maximum impact.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section-work">
+            <div class="container">
+                 <div class="uppercase secondary-text" data-scroll>Featured Projects</div>
+                 
+                 <div class="work-grid">
+                     
+                     <a href="#" class="work-item hover-trigger" data-scroll>
+                         <div class="work-media">
+                             <img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?q=80&w=1200&auto=format&fit=crop" alt="Project One">
+                         </div>
+                         <div class="work-info">
+                             <h3 class="serif">The Silent Echo</h3>
+                             <p class="work-meta">Narrative Short • Official Selection Sundance</p>
+                         </div>
+                     </a>
+
+                     <a href="#" class="work-item delay-1 hover-trigger" data-scroll>
+                        <div class="work-media">
+                            <img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?q=80&w=1200&auto=format&fit=crop" alt="Project Two">
+                        </div>
+                        <div class="work-info">
+                            <h3 class="serif">Nike: Momentum</h3>
+                            <p class="work-meta">Commercial Spot • Pacing & Sound Design Focus</p>
+                        </div>
+                    </a>
+
+                    <a href="#" class="work-item hover-trigger" data-scroll>
+                        <div class="work-media">
+                            <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1200&auto=format&fit=crop" alt="Project Three">
+                        </div>
+                        <div class="work-info">
+                            <h3 class="serif">Origins: The Chef's Table</h3>
+                            <p class="work-meta">Docu-series • Netflix</p>
+                        </div>
+                    </a>
+
+                    <a href="#" class="work-item delay-1 hover-trigger" data-scroll>
+                        <div class="work-media">
+                            <img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?q=80&w=1200&auto=format&fit=crop" alt="Project Four">
+                        </div>
+                        <div class="work-info">
+                            <h3 class="serif">Atlantic Records: Studio Sessions</h3>
+                            <p class="work-meta">Music Content • Multi-cam Editing</p>
+                        </div>
+                    </a>
+
+                 </div>
+            </div>
+        </section>
+
+        <footer class="section-footer" id="contact">
+            <div class="container" data-scroll>
+                <div class="uppercase secondary-text" style="margin-bottom: 2rem;">Next Steps</div>
+                <a href="mailto:hello@alexmorgan.com" class="cta-big hover-trigger">
+                    Let's cut something<br>
+                    <span class="serif accent">legendary.</span>
+                </a>
+
+                <div class="footer-bottom delay-1">
+                    <div>© 2025 Alex Morgan. All rights reserved.</div>
+                    <div class="footer-links">
+                        <a href="#" class="hover-trigger">LinkedIn</a>
+                        <a href="#" class="hover-trigger">Instagram</a>
+                        <a href="#" class="hover-trigger">IMDb</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+     
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <script>
+        /* ========================================
+        JS PART 1: INITIALIZE SMOOTH SCROLL (LENIS)
+        ========================================
+        This makes the whole site feel heavy and luxurious when scrolling.
+        */
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth exponential easing
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false, // Keep native feel on touch devices for better UX
+            touchMultiplier: 2,
+        })
+
+        function raf(time) {
+            lenis.raf(time)
+            requestAnimationFrame(raf)
+        }
+
+        requestAnimationFrame(raf)
+
+
+        /* ========================================
+        JS PART 2: SCROLL ANIMATIONS (Intersection Observer)
+        ========================================
+        This detects when elements with [data-scroll] enter the screen and adds the class
+        that triggers the CSS fade-in-up animation.
+        */
+        const scrollElements = document.querySelectorAll('[data-scroll]');
+
+        const elementInView = (el, dividend = 1) => {
+            const elementTop = el.getBoundingClientRect().top;
+            return (elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend);
+        };
+
+        const displayScrollElement = (element) => {
+            element.classList.add('is-visible');
+        };
+
+        const handleScrollAnimation = () => {
+            scrollElements.forEach((el) => {
+                // Dividend of 1.25 means animation triggers when element is 1/4 up the screen
+                if (elementInView(el, 1.15)) { 
+                    displayScrollElement(el);
+                }
+            })
+        }
+        
+        // Hook into Lenis scroll event for smoother detection than native window scroll
+        lenis.on('scroll', handleScrollAnimation);
+        // Trigger once on load in case elements are already visible
+        handleScrollAnimation();
+
+
+        /* ========================================
+        JS PART 3: SMART NAVBAR HIDING
+        ========================================
+        Hides nav on downscroll, shows on upscroll.
+        */
+        let lastScrollTop = 0;
+        const navbar = document.querySelector('.navbar');
+
+        lenis.on('scroll', ({ scroll }) => {
+            constscrollTop = scroll;
+            if (scroll > lastScrollTop && scroll > 100) {
+                // Scrolling Down
+                navbar.classList.add('nav-hidden');
+                navbar.classList.remove('nav-scrolled');
+            } else {
+                // Scrolling Up
+                navbar.classList.remove('nav-hidden');
+                // Add background color if not at the very top
+                if(scroll > 50) {
+                     navbar.classList.add('nav-scrolled');
+                } else {
+                     navbar.classList.remove('nav-scrolled');
+                }
+            }
+            lastScrollTop = scroll;
+        });
+
+
+        /* ========================================
+        JS PART 4: CUSTOM CURSOR (Desktop Only)
+        ========================================
+        */
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        // Triggers are links, buttons, and specific interactive areas
+        const hoverTriggers = document.querySelectorAll('.hover-trigger, a, button');
+
+        // Only run on non-touch devices
+        if (window.matchMedia("(pointer: fine)").matches) {
+            
+            window.addEventListener('mousemove', (e) => {
+                const posX = e.clientX;
+                const posY = e.clientY;
+
+                // Dot follows immediately
+                cursorDot.style.left = `${posX}px`;
+                cursorDot.style.top = `${posY}px`;
+                
+                // Outline follows with slight delay via CSS transition
+                cursorOutline.style.left = `${posX}px`;
+                cursorOutline.style.top = `${posY}px`;
+            });
+
+            // Add hover states
+            hoverTriggers.forEach(trigger => {
+                trigger.addEventListener('mouseenter', () => {
+                    document.body.classList.add('cursor-hover');
+                });
+                trigger.addEventListener('mouseleave', () => {
+                    document.body.classList.remove('cursor-hover');
+                });
+            });
+            
+            // Special handling for the Reel Play Button
+            const reelContainer = document.querySelector('.reel-container');
+            const playCursor = document.querySelector('.play-cursor');
+            
+            if(reelContainer && playCursor) {
+                 reelContainer.addEventListener('mouseenter', () => {
+                    cursorDot.style.opacity = 0;
+                    cursorOutline.style.opacity = 0;
+                });
+                reelContainer.addEventListener('mouseleave', () => {
+                    cursorDot.style.opacity = 1;
+                    cursorOutline.style.opacity = 1;
+                });
+            }
+
+        } else {
+            // Hide custom cursor elements on touch devices
+            cursorDot.style.display = 'none';
+            cursorOutline.style.display = 'none';
+        }
+        
+
+        /* ========================================
+        JS PART 5: MAGNETIC BUTTONS (Optional Polish)
+        ========================================
+        Makes buttons subtly attract to the mouse cursor before clicking.
+        */
+        const magneticBtns = document.querySelectorAll('.btn-magnetic');
+        if (window.matchMedia("(pointer: fine)").matches) {
+            magneticBtns.forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const position = btn.getBoundingClientRect();
+                    const x = e.pageX - position.left - position.width / 2;
+                    const y = e.pageY - position.top - position.height / 2;
+                    // Move the button slightly towards the mouse (divided by 5 for subtlety)
+                    btn.style.transform = `translate(${x * 0.2}px, ${y * 0.3}px)`;
+                });
+
+                btn.addEventListener('mouseleave', () => {
+                    // Reset position on leave
+                    btn.style.transform = 'translate(0px, 0px)';
+                });
+            });
+        }
+    </script>
+</body>
+</html>
